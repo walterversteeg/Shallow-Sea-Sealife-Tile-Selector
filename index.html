@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="shallow">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3062/3062264.png">
+    
+    <title>Shallow Sea - Sealife Tile Selector</title>
+    <style>
+        :root {
+            --bg-body: #40e0d0;
+            --bg-app: #00a8cc;
+            --bg-panel: white;
+            --text-main: #333;
+            --border-app: white;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        [data-theme="deepsea"] {
+            --bg-body: #001219;
+            --bg-app: #002535;
+            --bg-panel: #003554;
+            --text-main: #e0f7fa;
+            --border-app: #005f73;
+            --shadow: rgba(0,0,0,0.5);
+        }
+
+        body { 
+            font-family: sans-serif; 
+            background: var(--bg-body); 
+            display: flex; 
+            justify-content: center; 
+            padding: 15px; 
+            margin: 0; 
+            overflow-x: hidden; 
+            transition: background 0.5s ease;
+            /* Zorgt voor fijne interactie op mobiel */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app { 
+            background: var(--bg-app); 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 2px solid var(--border-app); 
+            box-shadow: 0 10px 20px var(--shadow); 
+            position: relative; 
+            z-index: 1; 
+            transition: all 0.5s ease; 
+            box-sizing: border-box;
+        }
+        
+        .header-nav { display: flex; justify-content: flex-end; margin-bottom: 5px; }
+        #themeSelect { background: var(--bg-panel); color: var(--text-main); border: 1px solid #ccc; border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: bold; cursor: pointer; outline: none; }
+
+        h1 { text-align: center; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); margin-top: 0; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: rgba(255,255,255,0.9); margin-top: 0; margin-bottom: 25px; font-size: 12px; letter-spacing: 2px; font-weight: bold; text-transform: uppercase; }
+
+        .panel { background: var(--bg-panel); color: var(--text-main); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ccc; position: relative; z-index: 5; transition: background 0.5s ease; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; }
+        
+        .sub-row { font-style: italic; font-weight: normal; font-size: 0.9em; opacity: 0.85; }
+
+        #gen-btn { width: 100%; padding: 15px; background: #004a7c; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        #gen-btn:active { transform: scale(0.96); }
+
+        .bubble { position: fixed; border: 1.5px solid #00a8cc; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 70%); border-radius: 50%; pointer-events: none; z-index: 9999; animation: floatUp 2s ease-out forwards; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 100% { transform: translateY(-180px) scale(1.6); opacity: 0; } }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .tile { padding: 15px; border-radius: 12px; position: relative; text-align: center; border: 1px solid #444; box-shadow: 0 2px 5px var(--shadow); opacity: 0; transform: scale(0.8); animation: tilePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes tilePop { to { opacity: 1; transform: scale(1); } }
+        
+        .base-tile { background: #ffffff; color: #333; }
+        .exp-tile { background: #ff8c00; color: white; border-color: #e67e22; }
+        [data-theme="deepsea"] .exp-tile { box-shadow: 0 0 10px rgba(255, 140, 0, 0.4); }
+
+        .t-id { font-size: 24px; font-weight: bold; }
+        .t-cls { position: absolute; top: 5px; left: 8px; font-size: 10px; font-weight: bold; opacity: 0.7; }
+        .t-icons { font-size: 20px; margin-top: 5px; }
+        .t-exp { position: absolute; top: 5px; right: 8px; }
+        
+        .stats { display: flex; justify-content: space-around; margin-top: 20px; font-weight: bold; background: var(--bg-panel); color: var(--text-main); padding: 10px; border-radius: 8px; border: 1px solid #ccc; transition: background 0.5s ease; font-size: 14px; }
+        .legend { margin-top: 20px; padding: 10px; background: #fdf5e6; border-radius: 8px; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; border: 1px solid #ccc; color: #333; }
+        [data-theme="deepsea"] .legend { background: #002535; color: #e0f7fa; border-color: #005f73; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="header-nav">
+        <select id="themeSelect" onchange="changeTheme(this.value)">
+            <option value="shallow">☀️ Shallow Mode</option>
+            <option value="deepsea">🐋 Deep Sea Mode</option>
+        </select>
+    </div>
+
+    <h1>SHALLOW SEA</h1>
+    <p class="subtitle">Sealife Tile Selector</p>
+
+    <div class="panel">
+        <div class="row">
+            <span>Include expansion tiles</span>
+            <input type="checkbox" id="cExp" onchange="document.getElementById('sB').style.display=this.checked?'block':'none'">
+        </div>
+        
+        <div id="sB" style="display:none; border-top: 1px solid #eee; padding-top: 10px; margin-bottom: 10px;">
+            <div class="row sub-row">
+                <span>Exp. Tiles: <span id="wN">5</span></span>
+                <input type="range" id="wR" min="1" max="10" value="5" oninput="document.getElementById('wN').innerHTML=this.value">
+            </div>
+            <div class="row sub-row">
+                <span>Random amount</span>
+                <input type="checkbox" id="cRand" onchange="document.getElementById('wR').disabled = this.checked;">
+            </div>
+        </div>
+
+        <div class="row">
+            <span>Include all classes (A-F)</span>
+            <input type="checkbox" id="cAll">
+        </div>
+        <button id="gen-btn" onclick="handleBtnClick(event)">GENERATE SETUP</button>
+    </div>
+
+    <div id="out" class="grid"></div>
+
+    <div id="sBar" class="stats" style="display:none">
+        <span title="Pure Coral" style="color:#e67e22">🪸 <span id="sC">0</span></span>
+        <span title="Pure Fish" style="color:#00a8cc">🐟 <span id="sF">0</span></span>
+        <span title="Both" style="color:#2ecc71">🪸🐟 <span id="sBth">0</span></span>
+        <span title="Expansion Tiles" style="color:#ff8c00">🐢 <span id="sE">0</span></span>
+    </div>
+
+    <div class="legend">
+        <div>🪸 Coral Only</div>
+        <div>🐟 Fish Only</div>
+        <div>🪸🐟 Combination</div>
+        <div>🐢 Expansion</div>
+    </div>
+</div>
+
+<script>
+    // Service Worker Registratie voor PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log("SW error", err));
+    }
+
+    function changeTheme(val) { document.documentElement.setAttribute('data-theme', val); }
+
+    var DATA = [
+        {c:'A',id:'A1',t:'Coral',g:'B'},{c:'A',id:'A2',t:'Coral',g:'B'},{c:'A',id:'A3',t:'Fish',g:'B'},{c:'A',id:'A4',t:'Fish',g:'B'},{c:'A',id:'A5',t:'Both',g:'E'},{c:'A',id:'A6',t:'Both',g:'E'},
+        {c:'B',id:'B1',t:'Coral',g:'B'},{c:'B',id:'B2',t:'Fish',g:'B'},{c:'B',id:'B3',t:'Coral',g:'B'},{c:'B',id:'B4',t:'Fish',g:'B'},{c:'B',id:'B5',t:'Coral',g:'E'},{c:'B',id:'B6',t:'Fish',g:'E'},{c:'B',id:'B7',t:'Coral',g:'E'},{c:'B',id:'B8',t:'Fish',g:'E'},
+        {c:'C',id:'C1',t:'Coral',g:'B'},{c:'C',id:'C2',t:'Coral',g:'B'},{c:'C',id:'C3',t:'Coral',g:'B'},{c:'C',id:'C4',t:'Fish',g:'B'},{c:'C',id:'C5',t:'Fish',g:'E'},{c:'C',id:'C6',t:'Fish',g:'E'},{c:'C',id:'C7',t:'Both',g:'E'},{c:'C',id:'C8',t:'Both',g:'E'},
+        {c:'D',id:'D1',t:'Coral',g:'B'},{c:'D',id:'D2',t:'Coral',g:'B'},{c:'D',id:'D3',t:'Fish',g:'B'},{c:'D',id:'D4',t:'Fish',g:'B'},{c:'D',id:'D5',t:'Both',g:'E'},{c:'D',id:'D6',t:'Both',g:'E'},
+        {c:'E',id:'E1',t:'Coral',g:'B'},{c:'E',id:'E2',t:'Coral',g:'B'},{c:'E',id:'E3',t:'Fish',g:'B'},{c:'E',id:'E4',t:'Fish',g:'B'},{c:'E',id:'E5',t:'Both',g:'E'},{c:'E',id:'E6',t:'Both',g:'E'},{c:'E',id:'E7',t:'Both',g:'E'},{c:'E',id:'E8',t:'Both',g:'E'},{c:'E',id:'E9',t:'Coral',g:'E'},{c:'E',id:'E10',t:'Fish',g:'E'},
+        {c:'F',id:'F1',t:'Coral',g:'B'},{c:'F',id:'F2',t:'Coral',g:'B'},{c:'F',id:'F3',t:'Fish',g:'E'},{c:'F',id:'F4',t:'Fish',g:'E'}
+    ];
+
+    function handleBtnClick(e) { blastBubbles(e); setTimeout(generate, 50); }
+
+    function blastBubbles(e) {
+        var x = e.clientX, y = e.clientY;
+        for (var i = 0; i < 25; i++) {
+            var b = document.createElement('div'); b.className = 'bubble';
+            var s = Math.floor(Math.random() * 15) + 5;
+            b.style.width = s + 'px'; b.style.height = s + 'px';
+            b.style.left = (x + (Math.random() * 80 - 40)) + 'px'; b.style.top = y + 'px';
+            document.body.appendChild(b);
+            (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 2000); })(b);
+        }
+    }
+
+    function generate() {
+        var eOn = document.getElementById('cExp').checked, aOn = document.getElementById('cAll').checked, isRand = document.getElementById('cRand').checked;
+        var target = isRand ? Math.floor(Math.random() * 10) + 1 : parseInt(document.getElementById('wR').value);
+        var res = [], ok = false, safe = 0;
+        while(!ok && safe < 3000) {
+            safe++; res = [];
+            var cnt = {A:0,B:0,C:0,D:0,E:0,F:0}, pool = [];
+            for(var i=0; i<DATA.length; i++){ if(eOn || DATA[i].g == 'B') pool.push(DATA[i]); }
+            pool.sort(function(){ return 0.5 - Math.random(); });
+            for(var i=0; i<pool.length; i++){ if(pool[i].c == 'F'){ res.push(pool[i]); cnt.F++; break; } }
+            if(aOn){
+                var l = ['A','B','C','D','E'];
+                for(var j=0; j<l.length; j++){
+                    for(var k=0; k<pool.length; k++){ if(pool[k].c == l[j]){ res.push(pool[k]); cnt[l[j]]++; break; } }
+                }
+            }
+            for(var i=0; i<pool.length; i++){
+                var t = pool[i], inRes = false;
+                for(var x=0; x<res.length; x++){ if(res[x].id == t.id) inRes = true; }
+                var limit = (t.c == 'C' ? 3 : 2);
+                if(!inRes && res.length < 10 && cnt[t.c] < limit){ res.push(t); cnt[t.c]++; }
+            }
+            if(res.length == 10){
+                var c=0, f=0, bth=0, e=0, classes = [];
+                for(var i=0; i<res.length; i++){
+                    var s = res[i];
+                    if(s.t == 'Coral') c++;
+                    else if(s.t == 'Fish') f++;
+                    else if(s.t == 'Both') bth++;
+                    if(s.g == 'E') e++;
+                    if(classes.indexOf(s.c) == -1) classes.push(s.c);
+                }
+                if((c + bth) >= 4 && (f + bth) >= 4 && (!eOn || Math.abs(e - target) <= 1) && (!aOn || classes.length == 6)){
+                    ok = true; show(res, c, f, bth, e);
+                }
+            }
+        }
+    }
+
+    function show(tiles, c, f, bth, e) {
+        tiles.sort(function(a,b){ return (a.id < b.id) ? -1 : 1; });
+        var html = '';
+        for(var i=0; i<tiles.length; i++){
+            var t = tiles[i];
+            var ico = (t.t == 'Coral') ? '🪸' : (t.t == 'Fish' ? '🐟' : '🪸🐟');
+            var style = (t.g == 'E') ? 'exp-tile' : 'base-tile';
+            var delay = (i * 0.05).toFixed(2);
+            html += '<div class="tile ' + style + '" style="animation-delay: ' + delay + 's">' + 
+                    '<span class="t-cls">' + t.c + '</span>' + 
+                    (t.g == 'E' ? '<span class="t-exp">🐢</span>' : '') + 
+                    '<span class="t-id">' + t.id + '</span>' + 
+                    '<div class="t-icons">' + ico + '</div></div>';
+        }
+        document.getElementById('out').innerHTML = html;
+        document.getElementById('sC').innerHTML = c;
+        document.getElementById('sF').innerHTML = f;
+        document.getElementById('sBth').innerHTML = bth;
+        document.getElementById('sE').innerHTML = e;
+        document.getElementById('sBar').style.display = 'flex';
+    }
+</script>
+</body>
+</html>
