@@ -1,6 +1,6 @@
 {
-  "name": "Shallow Sea Selector",
-  "short_name": "ShallowSea",
+  "name": "Shallow Sea Sealife Tile Selector",
+  "short_name": "Shallow Sea",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#00a8cc",
