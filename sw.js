@@ -1,4 +1,4 @@
-const cacheName = 'shallow-sea-v1';
+const cacheName = 'shallow-sea-v2';
 const assets = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
